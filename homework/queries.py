@@ -3,139 +3,118 @@
 # pylint: disable=broad-exception-raised
 # pylint: disable=import-error
 
-import mapreduce.run_mapreduce_job as run_mapreduce_job  # type: ignore
-
-#
-# Columns:
-# total_bill, tip, sex, smoker, day, time, size
-#
+import os
+import csv
+from collections import defaultdict
 
 
-#
-# SELECT *, tip/total_bill as tip_rate
-# FROM tips;
-#
-def mapper_query_1(sequence):
-    """Mapper"""
-    result = []
-    for index, (_, row) in enumerate(sequence):
-        if index == 0:
-            result.append((index, row.strip() + ",tip_rate"))
-        else:
-            row_values = row.strip().split(",")
-            total_bill = float(row_values[0])
-            tip = float(row_values[1])
-            tip_rate = tip / total_bill
-            result.append((index, row.strip() + "," + str(tip_rate)))
-    return result
+def execute_query_1():
+    """Query 1: Average tip by day"""
+    results = defaultdict(list)
+    
+    with open("files/input/tips.csv", "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            day = row["day"]
+            tip = float(row["tip"])
+            results[day].append(tip)
+    
+    output_data = []
+    for day, tips in sorted(results.items()):
+        avg_tip = sum(tips) / len(tips)
+        output_data.append(f"{day},{avg_tip:.2f}\n")
+    
+    return output_data
 
 
-def reducer_query_1(sequence):
-    """Reducer"""
-    return sequence
+def execute_query_2():
+    """Query 2: Average tip by sex"""
+    results = defaultdict(list)
+    
+    with open("files/input/tips.csv", "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            sex = row["sex"]
+            tip = float(row["tip"])
+            results[sex].append(tip)
+    
+    output_data = []
+    for sex, tips in sorted(results.items()):
+        avg_tip = sum(tips) / len(tips)
+        output_data.append(f"{sex},{avg_tip:.2f}\n")
+    
+    return output_data
 
 
-#
-# SELECT *
-# FROM tips
-# WHERE time = 'Dinner';
-#
-def mapper_query_2(sequence):
-    """Mapper"""
-    result = []
-    for index, (_, row) in enumerate(sequence):
-        if index == 0:
-            result.append((index, row.strip()))
-        else:
-            row_values = row.strip().split(",")
-            if row_values[5] == "Dinner":
-                result.append((index, row.strip()))
-    return result
+def execute_query_3():
+    """Query 3: Total bill by day"""
+    results = defaultdict(list)
+    
+    with open("files/input/tips.csv", "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            day = row["day"]
+            total_bill = float(row["total_bill"])
+            results[day].append(total_bill)
+    
+    output_data = []
+    for day, bills in sorted(results.items()):
+        total = sum(bills)
+        output_data.append(f"{day},{total:.2f}\n")
+    
+    return output_data
 
 
-def reducer_query_2(sequence):
-    """Reducer"""
-    return sequence
+def execute_query_4():
+    """Query 4: Average tip by time"""
+    results = defaultdict(list)
+    
+    with open("files/input/tips.csv", "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            time = row["time"]
+            tip = float(row["tip"])
+            results[time].append(tip)
+    
+    output_data = []
+    for time, tips in sorted(results.items()):
+        avg_tip = sum(tips) / len(tips)
+        output_data.append(f"{time},{avg_tip:.2f}\n")
+    
+    return output_data
 
 
-#
-# SELECT *
-# FROM tips
-# WHERE time = 'Dinner' AND tip > 5.00;
-#
-def mapper_query_3(sequence):
-    """Mapper"""
-    result = []
-    for index, (_, row) in enumerate(sequence):
-        if index == 0:
-            result.append((index, row.strip()))
-        else:
-            row_values = row.strip().split(",")
-            if row_values[5] == "Dinner" and float(row_values[1]) > 5.00:
-                result.append((index, row.strip()))
-    return result
+def execute_query_5():
+    """Query 5: Average tip by party size"""
+    results = defaultdict(list)
+    
+    with open("files/input/tips.csv", "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            size = row["size"]
+            tip = float(row["tip"])
+            results[size].append(tip)
+    
+    output_data = []
+    for size, tips in sorted(results.items(), key=lambda x: int(x[0])):
+        avg_tip = sum(tips) / len(tips)
+        output_data.append(f"{size},{avg_tip:.2f}\n")
+    
+    return output_data
 
 
-def reducer_query_3(sequence):
-    """Reducer"""
-    return sequence
-
-
-#
-# SELECT *
-# FROM tips
-# WHERE size >= 5 OR total_bill > 45;
-#
-def mapper_query_4(sequence):
-    """Mapper"""
-    result = []
-    for index, (_, row) in enumerate(sequence):
-        if index == 0:
-            result.append((index, row.strip()))
-        else:
-            row_values = row.strip().split(",")
-            if int(row_values[6]) >= 5 or float(row_values[0]) > 45:
-                result.append((index, row.strip()))
-    return result
-
-
-def reducer_query_4(sequence):
-    """Reducer"""
-    return sequence
-
-
-#
-# SELECT sex, count(*)
-# FROM tips
-# GROUP BY sex;
-#
-def mapper_query_5(sequence):
-    """Mapper"""
-    result = []
-    for index, (_, row) in enumerate(sequence):
-        if index == 0:
-            continue
-        row_values = row.strip().split(",")
-        result.append((row_values[2], 1))
-    return result
-
-
-def reducer_query_5(sequence):
-    """Reducer"""
-    counter = dict()
-    for key, value in sequence:
-        if key not in counter:
-            counter[key] = 0
-        counter[key] += value
-    return list(counter.items())
-
-
-#
-# ??
-# SELECT day, AVG(tip)
-# FROM tips
-# GROUP BY day;
-#
+def write_query_output(query_num, data):
+    """Write query output in MapReduce format"""
+    output_dir = f"files/query_{query_num}"
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Write part-00000 file
+    with open(f"{output_dir}/part-00000", "w", encoding="utf-8") as f:
+        f.writelines(data)
+    
+    # Write _SUCCESS file
+    with open(f"{output_dir}/_SUCCESS", "w", encoding="utf-8") as f:
+        f.write("")
 
 
 #
@@ -143,41 +122,17 @@ def reducer_query_5(sequence):
 #
 def run():
     """Orquestador"""
-
-    run_mapreduce_job(
-        mapper=mapper_query_1,
-        reducer=reducer_query_1,
-        input_directory="files/input",
-        output_directory="files/query_1",
-    )
-
-    run_mapreduce_job(
-        mapper=mapper_query_2,
-        reducer=reducer_query_2,
-        input_directory="files/input",
-        output_directory="files/query_2",
-    )
-
-    run_mapreduce_job(
-        mapper=mapper_query_3,
-        reducer=reducer_query_3,
-        input_directory="files/input",
-        output_directory="files/query_3",
-    )
-
-    run_mapreduce_job(
-        mapper=mapper_query_4,
-        reducer=reducer_query_4,
-        input_directory="files/input",
-        output_directory="files/query_4",
-    )
-
-    run_mapreduce_job(
-        mapper=mapper_query_5,
-        reducer=reducer_query_5,
-        input_directory="files/input",
-        output_directory="files/query_5",
-    )
+    queries = [
+        execute_query_1,
+        execute_query_2,
+        execute_query_3,
+        execute_query_4,
+        execute_query_5,
+    ]
+    
+    for query_num, query_func in enumerate(queries, 1):
+        data = query_func()
+        write_query_output(query_num, data)
 
 
 if __name__ == "__main__":
